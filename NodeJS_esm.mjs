@@ -1,10 +1,12 @@
-import Client from 'faunadb';
-import * as q from 'faunadb/query';
+import Client, { StreamApi } from 'faunadb'
+import * as q from 'faunadb/query'
 const client = new Client({
   secret: process.env.FAUNADB_SECRET,
-});
+})
+const streamApi = new StreamApi({ client })
 
-(async function () {
+run()
+async function run() {
   try {
     // await initData();
     const spaceShipsByPendingFuelTons = await client.query(
@@ -23,26 +25,44 @@ const client = new Client({
             })
           )
       )
-    );
+    )
 
-    console.info('data');
-    console.info(spaceShipsByPendingFuelTons.data);
+    console.info('data')
+    console.info(spaceShipsByPendingFuelTons.data)
+    spaceShipsByPendingFuelTons.data.forEach(startStream)
   } catch (err) {
-    console.info(err);
+    console.info(err)
   }
-})();
+}
+
+function startStream(data) {
+  const stream = streamApi
+    .document(data.ref)
+    .on('snapshot', (snapshot) => {
+      console.info(`Stream snapshot for ${snapshot.ref}`)
+    })
+    .on('version', (version) => {
+      console.info(`Stream receive new version `, version)
+    })
+    .on('error', (error) => {
+      console.log('Error:', error)
+      stream.close()
+      setTimeout(startStream, data)
+    })
+    .start()
+}
 
 async function initData() {
-  await createCollections();
-  await createData();
-  await createIndex();
+  await createCollections()
+  await createData()
+  await createIndex()
 }
 
 function createCollections() {
   return Promise.all([
     client.query(q.CreateCollection({ name: 'Spaceships' })),
     client.query(q.CreateCollection({ name: 'Pilots' })),
-  ]);
+  ])
 }
 
 async function createData() {
@@ -55,7 +75,7 @@ async function createData() {
       ],
       (data) => q.Create(q.Collection('Pilots'), { data })
     )
-  );
+  )
 
   await client.query(
     q.Map(
@@ -81,7 +101,7 @@ async function createData() {
       ],
       (data) => q.Create(q.Collection('Spaceships'), { data })
     )
-  );
+  )
 }
 
 async function createIndex() {
@@ -104,5 +124,5 @@ async function createIndex() {
       },
       values: [{ binding: 'pendingFuelTons' }, { field: ['ref'] }],
     })
-  );
+  )
 }

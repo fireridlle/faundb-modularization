@@ -1,7 +1,4 @@
-import { Client, query } from 'faunadb'
-import { useEffect, useState } from 'react'
-import './App.css'
-import logo from './logo.svg'
+import Client from 'faunadb'
 // import Get from 'faunadb/query/Get';
 // import Index from 'faunadb/query/Index';
 // import Let from 'faunadb/query/Let';
@@ -11,11 +8,27 @@ import logo from './logo.svg'
 // import Paginate from 'faunadb/query/Paginate';
 // import Select from 'faunadb/query/Select';
 // import Var from 'faunadb/query/Var';
-const { Get, FaunaIndex, Let, Map, Match, Merge, Paginate, Select, Var } = query
+import {
+  FaunaIndex,
+  Get,
+  Let,
+  Map,
+  Match,
+  Merge,
+  Paginate,
+  Select,
+  Var,
+} from 'faunadb/query'
+import Stream from 'faunadb/stream'
+import { useEffect, useState } from 'react'
+import './App.css'
+import logo from './logo.svg'
 
 const client = new Client({
   secret: process.env.REACT_APP_FAUNADB_SECRET,
 })
+
+const streamApi = new Stream.Api({ client })
 function App() {
   const data = useData()
 
@@ -59,7 +72,28 @@ function useData() {
             )
         )
       )
-      .then((resp) => setstate(resp.data))
+      .then((resp) => {
+        setstate(resp.data)
+        resp.data.forEach((data, index) => {
+          const stream = streamApi
+            .document(data.ref)
+            .on('snapshot', (snapshot) => {
+              console.info(`Stream snapshot for ${snapshot.ref}`)
+            })
+            .on('version', (version) => {
+              setstate((data) => [
+                ...data.slice(0, index),
+                version,
+                ...data.slice(index + 1),
+              ])
+            })
+            .on('error', (error) => {
+              console.log('Error:', error)
+              stream.close()
+            })
+            .start()
+        })
+      })
   }, [])
 
   return state

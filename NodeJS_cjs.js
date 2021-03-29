@@ -1,9 +1,12 @@
-const faunadb = require('faunadb')
+const { Client } = require('faunadb')
+const Stream = require('faunadb/stream')
 const q = require('faunadb/query')
 
-const client = new faunadb.Client({
+const client = new Client({
   secret: process.env.FAUNADB_SECRET,
 })
+
+const streamApi = new Stream.Api({ client })
 
 ;(async function () {
   try {
@@ -28,10 +31,28 @@ const client = new faunadb.Client({
 
     console.info('data')
     console.info(spaceShipsByPendingFuelTons.data)
+    spaceShipsByPendingFuelTons.data.forEach(startStream)
   } catch (err) {
     console.info(err)
   }
 })()
+
+function startStream(data) {
+  const stream = streamApi
+    .document(data.ref)
+    .on('snapshot', (snapshot) => {
+      console.info(`Stream snapshot for ${snapshot.ref}`)
+    })
+    .on('version', (version) => {
+      console.info(`Stream receive new version `, version)
+    })
+    .on('error', (error) => {
+      console.log('Error:', error)
+      stream.close()
+      setTimeout(startStream, data)
+    })
+    .start()
+}
 
 async function initData() {
   await createCollections()
