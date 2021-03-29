@@ -15,7 +15,7 @@ node --es-module-specifier-resolution=node NodeJS_esm.mjs
 #### React with ESM
 
 ```
-cd ./react-fauna
+cd ./react-faunadb
 
 yarn start
 ```
