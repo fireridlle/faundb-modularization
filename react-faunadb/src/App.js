@@ -1,4 +1,4 @@
-import Client from 'faunadb'
+import { Client } from 'faunadb'
 // import Get from 'faunadb/query/Get';
 // import Index from 'faunadb/query/Index';
 // import Let from 'faunadb/query/Let';
@@ -19,7 +19,7 @@ import {
   Select,
   Var,
 } from 'faunadb/query'
-import Stream from 'faunadb/stream'
+import { StreamApi } from 'faunadb/stream'
 import { useEffect, useState } from 'react'
 import './App.css'
 import logo from './logo.svg'
@@ -28,7 +28,7 @@ const client = new Client({
   secret: process.env.REACT_APP_FAUNADB_SECRET,
 })
 
-const streamApi = new Stream.Api({ client })
+const streamApi = new StreamApi({ client })
 function App() {
   const data = useData()
 

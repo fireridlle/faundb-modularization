@@ -1,10 +1,10 @@
-import Client from 'faunadb'
+import {Client} from 'faunadb'
 import * as q from 'faunadb/query'
-import Stream from 'faunadb/stream'
+import { StreamApi } from 'faunadb/stream'
 const client = new Client({
   secret: process.env.FAUNADB_SECRET,
 })
-const streamApi = new Stream.Api({ client })
+const streamApi = new StreamApi({ client })
 
 run()
 async function run() {

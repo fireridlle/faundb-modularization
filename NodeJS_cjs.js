@@ -1,12 +1,12 @@
 const { Client } = require('faunadb')
-const Stream = require('faunadb/stream')
+const { StreamApi } = require('faunadb/stream')
 const q = require('faunadb/query')
 
 const client = new Client({
   secret: process.env.FAUNADB_SECRET,
 })
 
-const streamApi = new Stream.Api({ client })
+const streamApi = new StreamApi({ client })
 
 ;(async function () {
   try {
